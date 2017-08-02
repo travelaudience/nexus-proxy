@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '2.0.1'
+}
+
+group 'com.travelaudience.nexus'
+version '1.0.0-SNAPSHOT'
+
+mainClassName = 'io.vertx.core.Launcher'
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+dependencies {
+    compile 'com.github.ben-manes.caffeine:caffeine:2.5.2'
+    compile 'com.google.apis:google-api-services-cloudresourcemanager:v1beta1-rev446-1.22.0'
+    compile 'com.google.apis:google-api-services-oauth2:v1-rev127-1.22.0'
+    compile 'io.vertx:vertx-auth-jwt:3.4.2'
+    compile 'io.vertx:vertx-unit:3.4.2'
+    compile 'io.vertx:vertx-web:3.4.2'
+    testCompile 'org.powermock:powermock-api-mockito2:1.7.0'
+    testCompile 'org.powermock:powermock-module-junit4:1.7.0'
+}
+
+repositories {
+    mavenCentral()
+}
+
+test {
+    // the following are not needed until e2e tests are made available
+    systemProperty "ORGANIZATION_ID", "ORGANIZATION_ID"
+    systemProperty "CLIENT_ID", "CLIENT_ID"
+    systemProperty "CLIENT_SECRET", "CLIENT_SECRET"
+}
+
+shadowJar {
+    classifier = null
+
+    manifest {
+        attributes 'Main-Verticle': 'com.travelaudience.devops.nexus.proxy.NexusProxyVerticle'
+    }
+    mergeServiceFiles {
+        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
+    }
+
+    version = null
+}
+
+task wrapper(type: Wrapper) {
+    distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
+    gradleVersion = '4.0.1'
+}
