@@ -1,6 +1,8 @@
 # nexus-google-iam-proxy
 A proxy for authenticating Nexus Repository Manager OSS users against Google Cloud IAM.
 
+**Note**: If one's looking for running this software as a container, an image is made available [here](https://github.com/travelaudience/docker-nexus-google-iam-proxy).
+
 ## Pre-requisites
 
 * JDK 8.
