@@ -65,7 +65,7 @@ public final class JwtAuth {
 
     /**
      * Validates whether the specified {@code jwtToken} is valid, returning the user's ID if validation is successful or
-     * {@null} otherwise.
+     * null otherwise.
      *
      * @param jwtToken the JWT token with which the user is authenticating.
      * @param handler  the result handler.
