@@ -59,7 +59,7 @@ $ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
   UPSTREAM_DOCKER_PORT="5000" \
   UPSTREAM_HTTP_PORT="8081" \
   UPSTREAM_HOST="localhost" \
-  java -jar ./build/libs/nexus-proxy.jar
+  java -jar ./build/libs/nexus-google-iam-proxy-1.0.0.jar
 ```
 
 Please check below for a description of all the supported environment variables.

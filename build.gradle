@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'com.travelaudience.nexus'
-version '1.0.0-SNAPSHOT'
+version '1.0.0'
 
 mainClassName = 'io.vertx.core.Launcher'
 sourceCompatibility = 1.8
@@ -42,8 +42,6 @@ shadowJar {
     mergeServiceFiles {
         include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
     }
-
-    version = null
 }
 
 task wrapper(type: Wrapper) {
