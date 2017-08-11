@@ -21,8 +21,7 @@ the authentication part proved much more complicated. For all of those reasons,
 we decided to implement our own proxy software that would deliver everything we
 needed.
  
-While the proxy supports authentication against GCP IAM, it is disabled by default
-so it can be used in simpler scenarios.
+Also, authentication is disabled by default so it can be used in simpler scenarios.
  
 When authentication is enabled, every user attempting to access Nexus is asked to
 authenticate against GCP with their GCP organization credentials. If authentication
