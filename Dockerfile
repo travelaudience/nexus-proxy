@@ -2,7 +2,6 @@ FROM openjdk:8u131-jdk-alpine AS builder
 COPY ./ /src/
 WORKDIR /src/
 RUN ./gradlew --info --no-daemon build
-RUN ls -la /src/build/libs/
 
 FROM quay.io/pires/docker-jre:8u131_alpine3.6.2
 
