@@ -3,7 +3,6 @@ package com.travelaudience.nexus.proxy;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
-import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
@@ -17,7 +16,7 @@ import io.vertx.ext.web.RoutingContext;
  * @see <a href="https://books.sonatype.com/nexus-book/reference3/security.html#remote-user-token">Authentication via Remote User Token</a>
  */
 public final class NexusHttpProxy {
-    private static final CharSequence X_FORWARDED_PROTO_HEADER = HttpHeaders.createOptimized("X-Forwarded-Proto");
+    private static final CharSequence X_FORWARDED_PROTO = HttpHeaders.createOptimized("X-Forwarded-Proto");
     private static final CharSequence X_FORWARDED_FOR = HttpHeaders.createOptimized("X-Forwarded-For");
 
     private final String host;
@@ -72,8 +71,8 @@ public final class NexusHttpProxy {
         final HttpClientRequest proxiedReq;
         proxiedReq = httpClient.request(origReq.method(), port, host, origReq.uri(), proxiedResHandler);
         proxiedReq.setChunked(true);
-        proxiedReq.headers().add(X_FORWARDED_PROTO_HEADER, origReq.scheme());
-        proxiedReq.headers().add(X_FORWARDED_FOR, origReq.remoteAddress().host());
+        proxiedReq.headers().add(X_FORWARDED_PROTO, getHeader(origReq, X_FORWARDED_PROTO, origReq.scheme()));
+        proxiedReq.headers().add(X_FORWARDED_FOR, getHeader(origReq, X_FORWARDED_FOR, origReq.remoteAddress().host()));
         proxiedReq.headers().addAll(origReq.headers());
         injectRutHeader(proxiedReq, userId);
         origReq.handler(proxiedReq::write);
@@ -84,6 +83,18 @@ public final class NexusHttpProxy {
                                        final String userId) {
         if (nexusRutHeader != null && nexusRutHeader.length() > 0 && userId != null && userId.length() > 0) {
             req.headers().add(nexusRutHeader, userId);
+        }
+    }
+
+    private static final String getHeader(final HttpServerRequest req,
+                                          final CharSequence name,
+                                          final String defaultValue) {
+        final String originalHeader = req.headers().get(name);
+
+        if (originalHeader == null) {
+            return defaultValue;
+        } else {
+            return originalHeader;
         }
     }
 }
