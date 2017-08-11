@@ -1,8 +1,5 @@
 package com.travelaudience.nexus.proxy;
 
-import static java.util.stream.Collectors.toMap;
-import static org.junit.Assert.assertEquals;
-
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.ext.unit.Async;
@@ -20,15 +17,15 @@ import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.ServerSocket;
-import java.net.URL;
-import java.net.URLDecoder;
+import java.net.*;
 import java.util.AbstractMap;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import static java.util.stream.Collectors.toMap;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
@@ -152,7 +149,7 @@ public class CloudIamAuthNexusProxyVerticleTests {
     }
 
     private static final int findRandomUnusedPort() {
-        try (final ServerSocket socket = new ServerSocket(0)) {
+        try (final ServerSocket socket = new ServerSocket(0, 50, InetAddress.getLocalHost())) {
             return socket.getLocalPort();
         } catch (final IOException ex) {
             throw new UncheckedIOException(ex);

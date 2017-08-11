@@ -18,6 +18,7 @@ import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.util.HashMap;
 import java.util.Map;
@@ -75,7 +76,7 @@ public class UnauthenticatedNexusProxyVerticleTests {
     }
 
     private static final int findRandomUnusedPort() {
-        try (final ServerSocket socket = new ServerSocket(0)) {
+        try (final ServerSocket socket = new ServerSocket(0, 50, InetAddress.getLocalHost())) {
             return socket.getLocalPort();
         } catch (final IOException ex) {
             throw new UncheckedIOException(ex);

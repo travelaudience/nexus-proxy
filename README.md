@@ -1,5 +1,8 @@
 # nexus-proxy
 
+[![Build Status](https://travis-ci.org/travelaudience/nexus-proxy.svg?branch=master)](https://travis-ci.org/travelaudience/nexus-proxy)
+[![Docker Repository on Quay](https://quay.io/repository/travelaudience/docker-nexus-proxy/status "Docker Repository on Quay")](https://quay.io/repository/travelaudience/docker-nexus-proxy)
+
 A proxy for Nexus Repository Manager that allows for optional authentication against external identity providers.
 
 ## Introduction
