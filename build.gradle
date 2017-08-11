@@ -7,7 +7,7 @@ plugins {
 group 'com.travelaudience.nexus'
 version '1.0.0'
 
-mainClassName = 'io.vertx.core.Launcher'
+mainClassName = 'com.travelaudience.nexus.proxy.Main'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
@@ -51,13 +51,7 @@ test {
 
 shadowJar {
     classifier = null
-
-    manifest {
-        attributes 'Main-Verticle': 'com.travelaudience.devops.nexus.proxy.NexusProxyVerticle'
-    }
-    mergeServiceFiles {
-        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
-    }
+    version = null
 }
 
 task wrapper(type: Wrapper) {

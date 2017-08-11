@@ -1,5 +1,9 @@
 package com.travelaudience.nexus.proxy;
 
+import static com.google.api.services.cloudresourcemanager.CloudResourceManagerScopes.CLOUD_PLATFORM_READ_ONLY;
+import static com.google.api.services.oauth2.Oauth2Scopes.USERINFO_EMAIL;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.api.client.auth.oauth2.Credential;
@@ -20,10 +24,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Set;
-
-import static com.google.api.services.cloudresourcemanager.CloudResourceManagerScopes.CLOUD_PLATFORM_READ_ONLY;
-import static com.google.api.services.oauth2.Oauth2Scopes.USERINFO_EMAIL;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Wraps {@link GoogleAuthorizationCodeFlow} caching authorization results and providing unchecked methods.
@@ -170,8 +170,7 @@ public class CachingGoogleAuthCodeFlow {
      * authorization code.
      *
      * @param authorizationCode the authorization code to use.
-     * @return a {@link GoogleTokenResponse} corresponding to an authorization code token request based on the given
-     * authorization code.
+     * @return a {@link GoogleTokenResponse} corresponding to an auth code token request based on the given auth code.
      */
     public final GoogleTokenResponse requestToken(final String authorizationCode) {
         try {

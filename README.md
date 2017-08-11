@@ -1,20 +1,67 @@
-# nexus-google-iam-proxy
-A proxy for authenticating Nexus Repository Manager OSS users against Google Cloud IAM.
+# nexus-proxy
 
-**Note**: If one's looking for running this software as a container, an image is made available [here](https://github.com/travelaudience/docker-nexus-google-iam-proxy).
+A proxy for Nexus Repository Manager that allows for optional authentication against external identity providers.
+
+## Introduction
+
+While deploying Nexus Repository Manager on GKE, we identified a couple issues: 
+
+1. GCLB backend health-checks weren't working when reaching Nexus directly.
+1. Couldn't expose Docker private registry with the same set-up used to
+expose the other artifact repositories.
+
+We also knew beforehand that we would need to authenticate Nexus against
+[Google Cloud Identity & Access Management](https://cloud.google.com/iam/).
+
+While the aforementioned issues were easily fixed with [Nginx](https://nginx.org/en/),
+the authentication part proved much more complicated. For all of those reasons,
+we decided to implement our own proxy software that would deliver everything we
+needed.
+ 
+While the proxy supports authentication against GCP IAM, it is disabled by default
+so it can be used in simpler scenarios.
+ 
+When authentication is enabled, every user attempting to access Nexus is asked to
+authenticate against GCP with their GCP organization credentials. If authentication
+succeeds, an encrypted token will be passed to Nexus so it knows who's logged-in.
+The user can then request a different, Nexus-specific set of credentials for
+using with tools like Maven, Gradle, sbt, Python (pip) and Docker.
+
+**Note**: These Nexus-specific credentials will work for as long as the user is a member
+of the organization.
+
+**Attention**: This proxy does not manage or enforce authorization. However, it's
+required that users and their roles and permissions are to be managed within
+Nexus itself.
+
+**Attention**: If one enables GCP IAM authentication, every user **must be created**
+with their organization email address as the username.
 
 ## Pre-requisites
 
+For building the project:
+
 * JDK 8.
+
+For basic proxying:
+
+* A domain name configured with an `A` and a `CNAME` records pointing to the proxy.
+  * For local testing one may create two entries on `/etc/hosts` pointing to `127.0.0.1`.
+* A running and properly configured instance of Nexus.
+  * One may use the default `8081` port for the HTTP connector and `5003` for the Docker registry, for example.
+
+For opt-in authentication against Google Cloud IAM:
+
+* All of the above.
 * A GCP organization.
 * A GCP project with the _Cloud Resources Manager_ API enabled.
 * A set of credentials of type _OAuth Client ID_ obtained from _GCP > API Manager > Credentials_.
-* Proper configuration of the resulting client with respect to the redirect URL.
-* A running and properly configured instance of Nexus.
+* Proper configuration of the resulting client's "_Redirect URL_".
 
 ## Generating the Keystore
 
-The following command will generate a suitable keystore for signing JWTs:
+A Java keystore is needed in order for the proxy to sign user tokens (JWT).
+Here's how to generate the keystore:
 
 ```bash
 $ keytool -genkey \
@@ -28,9 +75,11 @@ $ keytool -genkey \
           -validity 3651
 ```
 
-You will be prompted for two passwords. Please make sure they are the same. Feel free to change the value of the `dname`, `keystore` and `validity` parameters.
+One will be prompted for two passwords. One must make sure the passwords match.
 
-## Building
+Also, one is free to change the value of the `dname`, `keystore` and `validity` parameters.
+
+## Building the code
 
 The following command will build the project and generate a runnable jar:
 
@@ -38,15 +87,34 @@ The following command will build the project and generate a runnable jar:
 $ ./gradlew build
 ```
 
-## Running
+## Running the proxy
 
-The following command will run the proxy on port `8080` pointing to a local
-Nexus instance:
+The following command will run the proxy on port `8080` with no authentication
+and pointing to a local Nexus instance:
+
+```bash
+$ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
+  BIND_PORT="8080" \
+  NEXUS_DOCKER_HOST="containers.example.com" \
+  NEXUS_HTTP_HOST="nexus.example.com" \
+  NEXUS_RUT_HEADER="X-Forwarded-User" \
+  TLS_ENABLED="false" \
+  UPSTREAM_DOCKER_PORT="5000" \
+  UPSTREAM_HTTP_PORT="8081" \
+  UPSTREAM_HOST="localhost" \
+  java -jar ./build/libs/nexus-proxy.jar
+```
+
+## Running the proxy with GCP IAM authentication enabled
+
+The following command will run the proxy on port `8080` with GCP IAM
+authentication enabled and pointing to a local Nexus instance:
 
 ```bash
 $ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
   AUTH_CACHE_TTL="60000" \
   BIND_PORT="8080" \
+  CLOUD_IAM_AUTH_ENABLED="true" \
   CLIENT_ID="my-client-id" \
   CLIENT_SECRET="my-client-secret" \
   KEYSTORE_PATH="./.secrets/keystore.jceks" \
@@ -64,8 +132,6 @@ $ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
   java -jar ./build/libs/nexus-google-iam-proxy-1.0.0.jar
 ```
 
-Please check below for a description of all the supported environment variables.
-
 ## Environment Variables
 
 | Name                                | Description |
@@ -75,6 +141,7 @@ Please check below for a description of all the supported environment variables.
 | `BIND_PORT`                         | The port on which to listen for incoming requests. |
 | `CLIENT_ID`                         | The application's client ID in _GCP / API Manager / Credentials_. |
 | `CLIENT_SECRET`                     | The abovementioned application's client secret. |
+| `CLOUD_IAM_AUTH_ENABLED`            | Whether to enable authentication against Google Cloud IAM. |
 | `KEYSTORE_PATH`                     | The path to the keystore containing the key with which to sign JWTs. |
 | `KEYSTORE_PASS`                     | The password of the abovementioned keystore. |
 | `NEXUS_DOCKER_HOST`                 | The host used to access the Nexus Docker registry. |

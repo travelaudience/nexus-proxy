@@ -1,5 +1,7 @@
 package com.travelaudience.nexus.proxy;
 
+import static java.time.temporal.ChronoUnit.DAYS;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -9,8 +11,6 @@ import io.vertx.ext.auth.jwt.JWTOptions;
 import java.time.Duration;
 import java.util.List;
 import java.util.function.Consumer;
-
-import static java.time.temporal.ChronoUnit.DAYS;
 
 /**
  * Provides utility methods for dealing with JWT-based authentication.

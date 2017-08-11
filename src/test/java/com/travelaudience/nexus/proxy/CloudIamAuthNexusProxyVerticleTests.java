@@ -1,5 +1,8 @@
 package com.travelaudience.nexus.proxy;
 
+import static java.util.stream.Collectors.toMap;
+import static org.junit.Assert.assertEquals;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.ext.unit.Async;
@@ -7,7 +10,6 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
@@ -28,13 +30,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static java.util.stream.Collectors.toMap;
-import static org.junit.Assert.assertEquals;
-
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
-@PrepareForTest(NexusProxyVerticle.class)
-public class NexusProxyVerticleTests {
+@PrepareForTest(CloudIamAuthNexusProxyVerticle.class)
+public class CloudIamAuthNexusProxyVerticleTests {
     private static final String HOST = "localhost";
     private static final int PORT = findRandomUnusedPort();
 
@@ -48,6 +47,7 @@ public class NexusProxyVerticleTests {
             put("ALLOWED_USER_AGENTS_ON_ROOT_REGEX", "GoogleHC");
             put("AUTH_CACHE_TTL", "60");
             put("BIND_PORT", String.valueOf(PORT));
+            put("CLOUD_IAM_AUTH_ENABLED", "true");
             put("KEYSTORE_PATH", "keystore.jceks");
             put("KEYSTORE_PASS", "safe#passw0rd!");
             put("NEXUS_DOCKER_HOST", "containers.example.com");
@@ -64,19 +64,15 @@ public class NexusProxyVerticleTests {
         }
     };
 
-
     private Vertx vertx;
-
-    @BeforeClass
-    public static void setUpBeforeClass() {
-        PowerMockito.mockStatic(System.class);
-        VARS.entrySet().stream().forEach(e -> PowerMockito.when(System.getenv(e.getKey())).thenReturn(e.getValue()));
-    }
 
     @Before
     public void setUp(final TestContext context) {
+        PowerMockito.mockStatic(System.class);
+        VARS.entrySet().stream().forEach(e -> PowerMockito.when(System.getenv(e.getKey())).thenReturn(e.getValue()));
+
         this.vertx = Vertx.vertx();
-        this.vertx.deployVerticle(NexusProxyVerticle.class.getName(), context.asyncAssertSuccess());
+        this.vertx.deployVerticle(CloudIamAuthNexusProxyVerticle.class.getName(), context.asyncAssertSuccess());
     }
 
     @After

@@ -2,7 +2,13 @@ package com.travelaudience.nexus.proxy;
 
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
-import io.vertx.core.http.*;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpClientRequest;
+import io.vertx.core.http.HttpClientResponse;
+import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpServerRequest;
+import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
 
 /**
@@ -69,8 +75,15 @@ public final class NexusHttpProxy {
         proxiedReq.headers().add(X_FORWARDED_PROTO_HEADER, origReq.scheme());
         proxiedReq.headers().add(X_FORWARDED_FOR, origReq.remoteAddress().host());
         proxiedReq.headers().addAll(origReq.headers());
-        proxiedReq.headers().add(this.nexusRutHeader, userId);
+        injectRutHeader(proxiedReq, userId);
         origReq.handler(proxiedReq::write);
         origReq.endHandler(v -> proxiedReq.end());
+    }
+
+    private final void injectRutHeader(final HttpClientRequest req,
+                                       final String userId) {
+        if (nexusRutHeader != null && nexusRutHeader.length() > 0 && userId != null && userId.length() > 0) {
+            req.headers().add(nexusRutHeader, userId);
+        }
     }
 }
