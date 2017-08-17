@@ -5,9 +5,11 @@
 
 A proxy for Nexus Repository Manager that allows for optional authentication against external identity providers.
 
+Read [the design document](docs/design.md) for a more detailed explanation of why and how.
+
 ## Introduction
 
-While deploying Nexus Repository Manager on GKE, we identified a couple issues: 
+While deploying Nexus Repository Manager on GKE, we identified a couple issues:
 
 1. GCLB backend health-checks weren't working when reaching Nexus directly.
 1. Couldn't expose Docker private registry with the same set-up used to
@@ -20,9 +22,9 @@ While the aforementioned issues were easily fixed with [Nginx](https://nginx.org
 the authentication part proved much more complicated. For all of those reasons,
 we decided to implement our own proxy software that would deliver everything we
 needed.
- 
+
 Also, authentication is disabled by default so it can be used in simpler scenarios.
- 
+
 When authentication is enabled, every user attempting to access Nexus is asked to
 authenticate against GCP with their GCP organization credentials. If authentication
 succeeds, an encrypted token will be passed to Nexus so it knows who's logged-in.
