@@ -18,6 +18,10 @@ through Nexus administrative UI before start using Nexus.
 A password needs to be set but it will only be important if GCP IAM
 authentication is disabled.
 
+**ATTENTION:**: If GCP IAM authentication is enabled, it is necessary to
+[enable the Nexus "_Rut Auth_" capability](https://help.sonatype.com/display/NXRM3/Security#Security-AuthenticationviaRemoteUserToken).
+Otherwise, authentication succeeds but Nexus can't initiate user sessions.
+
 **ATTENTION**: The Nexus-specific credentials mentioned above are valid for
 one year **and** for as long as the user is a member of the GCP organization.
 
