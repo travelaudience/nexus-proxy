@@ -14,12 +14,16 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.VirtualHostHandler;
 import io.vertx.ext.web.templ.HandlebarsTemplateEngine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.regex.Pattern;
 
 public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
+    private static final Logger LOGGER = LoggerFactory.getLogger(BaseNexusProxyVerticle.class);
+
     private static final String ALLOWED_USER_AGENTS_ON_ROOT_REGEX = System.getenv("ALLOWED_USER_AGENTS_ON_ROOT_REGEX");
     private static final String BIND_HOST = Objects.firstNonNull(System.getenv("BIND_HOST"), "0.0.0.0");
     private static final Integer BIND_PORT = Ints.tryParse(System.getenv("BIND_PORT"));
@@ -131,7 +135,13 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
                 new HttpServerOptions().setSsl(TLS_ENABLED).setPfxKeyCertOptions(pfxOptions)
         ).requestHandler(
                 router::accept
-        ).listen(BIND_PORT, BIND_HOST);
+        ).listen(BIND_PORT, BIND_HOST, res -> {
+            if (res.succeeded()) {
+                LOGGER.info("Listening at {}:{}.", BIND_HOST, BIND_PORT);
+            } else {
+                LOGGER.error("Couldn't bind to {}:{}.", BIND_HOST, BIND_PORT, res.cause());
+            }
+        });
     }
 
     /**

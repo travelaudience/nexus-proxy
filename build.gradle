@@ -12,6 +12,7 @@ sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
 dependencies {
+    compile 'ch.qos.logback:logback-classic:1.2.3'
     compile 'com.github.ben-manes.caffeine:caffeine:2.5.2'
     compile 'com.google.apis:google-api-services-cloudresourcemanager:v1beta1-rev446-1.22.0'
     compile 'com.google.apis:google-api-services-oauth2:v1-rev127-1.22.0'

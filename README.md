@@ -167,6 +167,7 @@ $ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
 | `ENFORCE_HTTPS`                     | Whether to enforce access by HTTPS only. If set to `true` Nexus will only be accessible via HTTPS. |
 | `KEYSTORE_PATH`                     | The path to the keystore containing the key with which to sign JWTs. |
 | `KEYSTORE_PASS`                     | The password of the abovementioned keystore. |
+| `LOG_LEVEL`                         | The desired log level (i.e., `trace`, `debug`, `info`, `warn` or `error`). Defaults to `info`. |
 | `NEXUS_DOCKER_HOST`                 | The host used to access the Nexus Docker registry. |
 | `NEXUS_HTTP_HOST`                   | The host used to access the Nexus UI and Maven repositories. |
 | `NEXUS_RUT_HEADER`                  | The name of the header which will convey auth info to Nexus. |
