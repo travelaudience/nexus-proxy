@@ -12,12 +12,16 @@ import io.vertx.core.net.PfxOptions;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.VirtualHostHandler;
+import io.vertx.ext.web.templ.HandlebarsTemplateEngine;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.regex.Pattern;
 
 public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
     private static final String ALLOWED_USER_AGENTS_ON_ROOT_REGEX = System.getenv("ALLOWED_USER_AGENTS_ON_ROOT_REGEX");
     private static final Integer BIND_PORT = Ints.tryParse(System.getenv("BIND_PORT"));
+    private static final Boolean ENFORCE_HTTPS = Boolean.parseBoolean(System.getenv("ENFORCE_HTTPS"));
     private static final String NEXUS_RUT_HEADER = System.getenv("NEXUS_RUT_HEADER");
     private static final String TLS_CERT_PK12_PATH = System.getenv("TLS_CERT_PK12_PATH");
     private static final String TLS_CERT_PK12_PASS = System.getenv("TLS_CERT_PK12_PASS");
@@ -26,8 +30,12 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
     private static final String UPSTREAM_HOST = System.getenv("UPSTREAM_HOST");
     private static final Integer UPSTREAM_HTTP_PORT = Ints.tryParse(System.getenv("UPSTREAM_HTTP_PORT"));
 
+    private static final CharSequence X_FORWARDED_PROTO = HttpHeaders.createOptimized("X-Forwarded-Proto");
+
     protected final String nexusDockerHost = System.getenv("NEXUS_DOCKER_HOST");
     protected final String nexusHttpHost = System.getenv("NEXUS_HTTP_HOST");
+
+    protected final HandlebarsTemplateEngine handlebars = HandlebarsTemplateEngine.create();
 
     /**
      * The pattern against which to match 'User-Agent' headers.
@@ -75,6 +83,38 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
         router.route(ALL_PATHS).handler(VirtualHostHandler.create(nexusHttpHost, ctx -> {
             ctx.data().put(PROXY, httpProxy);
             ctx.next();
+        }));
+
+        router.route(ALL_PATHS).handler(VirtualHostHandler.create(nexusHttpHost, ctx -> {
+            final String protocol = ctx.request().headers().get(X_FORWARDED_PROTO);
+
+            if (!ENFORCE_HTTPS || "https".equals(protocol)) {
+                ctx.next();
+                return;
+            }
+
+            final URI oldUri;
+
+            try {
+                oldUri = new URI(ctx.request().absoluteURI());
+            } catch (final URISyntaxException ex) {
+                throw new RuntimeException(ex);
+            }
+
+            if ("https".equals(oldUri.getScheme())) {
+                ctx.next();
+                return;
+            }
+
+            ctx.put("nexus_http_host", nexusHttpHost);
+
+            handlebars.render(ctx, "templates", "/http-disabled.hbs", res -> { // The '/' is somehow necessary.
+                if (res.succeeded()) {
+                    ctx.response().setStatusCode(400).end(res.result());
+                } else {
+                    ctx.response().setStatusCode(500).end("Internal Server Error");
+                }
+            });
         }));
 
         configureRouting(router);

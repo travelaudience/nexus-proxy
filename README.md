@@ -25,6 +25,10 @@ Otherwise, authentication succeeds but Nexus can't initiate user sessions.
 **ATTENTION**: The Nexus-specific credentials mentioned above are valid for
 one year **and** for as long as the user is a member of the GCP organization.
 
+**ATTENTION**: If the `ENFORCE_HTTPS` flag is set to `true` it is assumed that
+one has configured `nexus-proxy` or any load-balancers in front of it to serve
+HTTPS on host `NEXUS_HTTP_HOST` and port `443` with a valid TLS certificate.
+
 ## Introduction
 
 While deploying Nexus Repository Manager on GKE, we identified a couple issues:
@@ -156,6 +160,7 @@ $ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
 | `CLIENT_ID`                         | The application's client ID in _GCP / API Manager / Credentials_. |
 | `CLIENT_SECRET`                     | The abovementioned application's client secret. |
 | `CLOUD_IAM_AUTH_ENABLED`            | Whether to enable authentication against Google Cloud IAM. |
+| `ENFORCE_HTTPS`                     | Whether to enforce access by HTTPS only. If set to `true` Nexus will only be accessible via HTTPS. |
 | `KEYSTORE_PATH`                     | The path to the keystore containing the key with which to sign JWTs. |
 | `KEYSTORE_PASS`                     | The password of the abovementioned keystore. |
 | `NEXUS_DOCKER_HOST`                 | The host used to access the Nexus Docker registry. |
