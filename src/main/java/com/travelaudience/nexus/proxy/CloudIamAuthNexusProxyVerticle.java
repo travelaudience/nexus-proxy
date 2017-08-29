@@ -139,14 +139,28 @@ public class CloudIamAuthNexusProxyVerticle extends BaseNexusProxyVerticle {
         }));
 
         router.route(CALLBACK_PATH).handler(ctx -> {
+            final String authorizationUri = flow.buildAuthorizationUri();
+
             if (!ctx.request().params().contains(AUTH_CODE_PARAM_NAME)) {
-                ctx.response().setStatusCode(302).putHeader(HttpHeaders.LOCATION, flow.buildAuthorizationUri()).end();
-            } else {
-                final GoogleTokenResponse token = flow.requestToken(ctx.request().params().get(AUTH_CODE_PARAM_NAME));
-                flow.storeCredential(token);
-                ctx.session().put(SessionKeys.USER_ID, flow.getPrincipal(token));
-                ctx.response().setStatusCode(302).putHeader(HttpHeaders.LOCATION, ROOT_PATH).end();
+                ctx.response().setStatusCode(302).putHeader(HttpHeaders.LOCATION, authorizationUri).end();
+                return;
             }
+
+            final GoogleTokenResponse token;
+            final String principal;
+
+            try {
+                token = flow.requestToken(ctx.request().params().get(AUTH_CODE_PARAM_NAME));
+                flow.storeCredential(token);
+                principal = flow.getPrincipal(token);
+            } catch (final UncheckedIOException ex) {
+                LOGGER.error("Couldn't request access token from Google.", ex);
+                ctx.response().setStatusCode(302).putHeader(HttpHeaders.LOCATION, authorizationUri).end();
+                return;
+            }
+
+            ctx.session().put(SessionKeys.USER_ID, principal);
+            ctx.response().setStatusCode(302).putHeader(HttpHeaders.LOCATION, ROOT_PATH).end();
         });
 
         router.route(ALL_PATHS).handler(ctx -> {
