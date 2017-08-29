@@ -8,7 +8,6 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
@@ -132,12 +131,9 @@ public class CachingGoogleAuthCodeFlow {
             return false;
         }
 
-        final GoogleCredential googleCredential = new GoogleCredential().setAccessToken(credential.getAccessToken());
-
-        final CloudResourceManager crm = new CloudResourceManager.Builder(
-                HTTP_TRANSPORT,
-                JSON_FACTORY,
-                googleCredential).setApplicationName(this.authFlow.getClientId()).build();
+        final CloudResourceManager crm = new CloudResourceManager.Builder(HTTP_TRANSPORT, JSON_FACTORY, credential)
+                .setApplicationName(this.authFlow.getClientId())
+                .build();
 
         final List<Organization> organizations;
 
