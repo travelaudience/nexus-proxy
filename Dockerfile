@@ -3,7 +3,7 @@ COPY ./ /src/
 WORKDIR /src/
 RUN ./gradlew --info --no-daemon build
 
-FROM quay.io/pires/docker-jre:8u131_alpine3.6.2
+FROM quay.io/pires/docker-jre:8u131_r2
 
 ENV ALLOWED_USER_AGENTS_ON_ROOT_REGEX "GoogleHC"
 ENV AUTH_CACHE_TTL "300"
