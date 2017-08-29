@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'com.travelaudience.nexus'
-version '1.0.0'
+version '2.1.0'
 
 mainClassName = 'com.travelaudience.nexus.proxy.Main'
 sourceCompatibility = 1.8
@@ -53,7 +53,6 @@ test {
 
 shadowJar {
     classifier = null
-    version = null
 }
 
 task wrapper(type: Wrapper) {
