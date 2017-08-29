@@ -4,6 +4,7 @@ import static com.travelaudience.nexus.proxy.ContextKeys.PROXY;
 import static com.travelaudience.nexus.proxy.Paths.ALL_PATHS;
 import static com.travelaudience.nexus.proxy.Paths.ROOT_PATH;
 
+import com.google.common.base.Objects;
 import com.google.common.primitives.Ints;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.http.HttpHeaders;
@@ -20,6 +21,7 @@ import java.util.regex.Pattern;
 
 public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
     private static final String ALLOWED_USER_AGENTS_ON_ROOT_REGEX = System.getenv("ALLOWED_USER_AGENTS_ON_ROOT_REGEX");
+    private static final String BIND_HOST = Objects.firstNonNull(System.getenv("BIND_HOST"), "0.0.0.0");
     private static final Integer BIND_PORT = Ints.tryParse(System.getenv("BIND_PORT"));
     private static final Boolean ENFORCE_HTTPS = Boolean.parseBoolean(System.getenv("ENFORCE_HTTPS"));
     private static final String NEXUS_RUT_HEADER = System.getenv("NEXUS_RUT_HEADER");
@@ -129,7 +131,7 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
                 new HttpServerOptions().setSsl(TLS_ENABLED).setPfxKeyCertOptions(pfxOptions)
         ).requestHandler(
                 router::accept
-        ).listen(BIND_PORT);
+        ).listen(BIND_PORT, BIND_HOST);
     }
 
     /**

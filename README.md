@@ -159,6 +159,7 @@ $ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
 |-------------------------------------|-------------|
 | `ALLOWED_USER_AGENTS_ON_ROOT_REGEX` | A regex against which to match the `User-Agent` of requests to `GET /` so that they can be answered with `200 OK`. |
 | `AUTH_CACHE_TTL`                    | The amount of time (in _milliseconds_) during which to cache the fact that a given user is authorized to make requests. |
+| `BIND_HOST`                         | The interface on which to listen for incoming requests. Defaults to `0.0.0.0`. |
 | `BIND_PORT`                         | The port on which to listen for incoming requests. |
 | `CLIENT_ID`                         | The application's client ID in _GCP / API Manager / Credentials_. |
 | `CLIENT_SECRET`                     | The abovementioned application's client secret. |
