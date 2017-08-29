@@ -20,13 +20,18 @@ import io.vertx.ext.web.handler.CookieHandler;
 import io.vertx.ext.web.handler.SessionHandler;
 import io.vertx.ext.web.handler.VirtualHostHandler;
 import io.vertx.ext.web.sstore.LocalSessionStore;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.UncheckedIOException;
 import java.util.Optional;
 
 /**
  * A verticle which implements a simple proxy for authenticating Nexus users against Google Cloud IAM.
  */
 public class CloudIamAuthNexusProxyVerticle extends BaseNexusProxyVerticle {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CloudIamAuthNexusProxyVerticle.class);
+
     private static final Integer AUTH_CACHE_TTL = Ints.tryParse(System.getenv("AUTH_CACHE_TTL"));
     private static final String CLIENT_ID = System.getenv("CLIENT_ID");
     private static final String CLIENT_SECRET = System.getenv("CLIENT_SECRET");
@@ -187,12 +192,34 @@ public class CloudIamAuthNexusProxyVerticle extends BaseNexusProxyVerticle {
                 ctx.response().setStatusCode(302).putHeader(HttpHeaders.LOCATION, CALLBACK_PATH).end();
                 return;
             }
-            if (userId == null || !flow.isOrganizationMember(userId)) {
+            if (userId == null) {
                 ctx.response().setStatusCode(403).end();
                 return;
             }
 
-            ctx.next();
+            boolean isOrganizationMember = false;
+
+            try {
+                isOrganizationMember = flow.isOrganizationMember(userId);
+            } catch (final UncheckedIOException ex) {
+                // Destroy the user's session in case of an error while validating membership.
+                ctx.session().destroy();
+                LOGGER.error("Couldn't check membership for {}. Their session has been destroyed.", userId, ex);
+            }
+
+            if (isOrganizationMember) {
+                // The user is an organization member.
+                LOGGER.debug("{} is organization member. Allowing.", userId);
+                ctx.next();
+            } else if ((Boolean) ctx.data().getOrDefault(HAS_AUTHORIZATION_HEADER, false)) {
+                // The user is not an organization member AND is most probably using a CLI tool. --> Forbid.
+                LOGGER.debug("{} has an auth token but is not an organization member. Forbidding.", userId);
+                ctx.response().setStatusCode(403).end();
+            } else {
+                // The user is not an organization member AND is most probably browsing Nexus UI. --> Redirect.
+                LOGGER.debug("{} does not have an auth token and is not an organization member. Redirecting.", userId);
+                ctx.response().setStatusCode(302).putHeader(HttpHeaders.LOCATION, CALLBACK_PATH).end();
+            }
         });
 
         router.get(CLI_CREDENTIALS_PATH).produces(MediaType.JSON_UTF_8.toString()).handler(ctx -> {
