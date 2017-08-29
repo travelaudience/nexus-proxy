@@ -16,7 +16,10 @@ through Nexus administrative UI before start using Nexus.
 **ATTENTION**: If GCP IAM authentication is enabled, every user account
 **must be created** with their organization email address as the username.
 A password needs to be set but it will only be important if GCP IAM
-authentication is disabled.
+authentication is disabled. **Also** it is necessary to grant the
+"_Organization Viewer_" role [**at organization-level**](https://cloud.google.com/iam/docs/resource-hierarchy-access-control)
+(i.e., in the "_IAM & Admin_" section of the organization in the GCP UI) to
+every user.
 
 **ATTENTION:**: If GCP IAM authentication is enabled, it is necessary to
 [enable the Nexus "_Rut Auth_" capability](https://help.sonatype.com/display/NXRM3/Security#Security-AuthenticationviaRemoteUserToken).
