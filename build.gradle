@@ -5,7 +5,7 @@ plugins {
 }
 
 group 'com.travelaudience.nexus'
-version '2.1.0'
+version '2.2.0'
 
 mainClassName = 'com.travelaudience.nexus.proxy.Main'
 sourceCompatibility = 1.8
