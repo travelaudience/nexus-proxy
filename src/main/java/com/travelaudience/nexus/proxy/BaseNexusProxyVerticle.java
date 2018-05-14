@@ -126,7 +126,25 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
         configureRouting(router);
 
         router.route(ALL_PATHS).handler(ctx -> {
-            ((NexusHttpProxy) ctx.data().get(PROXY)).proxyUserRequest(getUserId(ctx), ctx.request(), ctx.response());
+            final NexusHttpProxy proxy = ((NexusHttpProxy) ctx.data().get(PROXY));
+
+            if (proxy != null) {
+                proxy.proxyUserRequest(getUserId(ctx), ctx.request(), ctx.response());
+                return;
+            }
+
+            // The only way proxy can be null is if the Host header of the request doesn't match any of the known
+            // hosts (NEXUS_DOCKER_HOST or NEXUS_HTTP_HOST). In that scenario we should fail gracefully and indicate
+            // how to access Nexus properly.
+            ctx.put("nexus_http_host", nexusHttpHost);
+            ctx.put("nexus_docker_host", nexusDockerHost);
+            handlebars.render(ctx, "templates", "/invalid-host.hbs", res -> { // The '/' is somehow necessary.
+                if (res.succeeded()) {
+                    ctx.response().setStatusCode(400).end(res.result());
+                } else {
+                    ctx.response().setStatusCode(500).end("Internal Server Error");
+                }
+            });
         });
 
         final PfxOptions pfxOptions = new PfxOptions().setPath(TLS_CERT_PK12_PATH).setPassword(TLS_CERT_PK12_PASS);
