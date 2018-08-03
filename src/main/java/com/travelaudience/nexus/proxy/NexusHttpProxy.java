@@ -6,6 +6,7 @@ import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientRequest;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
+import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.ext.web.RoutingContext;
@@ -70,6 +71,9 @@ public final class NexusHttpProxy {
 
         final HttpClientRequest proxiedReq;
         proxiedReq = httpClient.request(origReq.method(), port, host, origReq.uri(), proxiedResHandler);
+        if(origReq.method() == HttpMethod.OTHER) {
+            proxiedReq.setRawMethod(origReq.rawMethod());
+        }
         proxiedReq.setChunked(true);
         proxiedReq.headers().add(X_FORWARDED_PROTO, getHeader(origReq, X_FORWARDED_PROTO, origReq.scheme()));
         proxiedReq.headers().add(X_FORWARDED_FOR, getHeader(origReq, X_FORWARDED_FOR, origReq.remoteAddress().host()));
