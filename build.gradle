@@ -57,5 +57,5 @@ shadowJar {
 
 task wrapper(type: Wrapper) {
     distributionUrl = "https://services.gradle.org/distributions/gradle-$gradleVersion-all.zip"
-    gradleVersion = '4.0.1'
+    gradleVersion = '4.9.0'
 }
