@@ -1,9 +1,9 @@
-FROM openjdk:8u131-jdk-alpine AS builder
+FROM openjdk:8-jdk-slim AS builder
 COPY ./ /src/
 WORKDIR /src/
 RUN ./gradlew --info --no-daemon build
 
-FROM quay.io/pires/docker-jre:8u151
+FROM quay.io/pires/docker-jre:8u171
 
 ENV ALLOWED_USER_AGENTS_ON_ROOT_REGEX "GoogleHC"
 ENV AUTH_CACHE_TTL "300"
