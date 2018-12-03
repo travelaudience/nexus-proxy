@@ -32,6 +32,10 @@ one year **and** for as long as the user is a member of the GCP organization.
 one has configured `nexus-proxy` or any load-balancers in front of it to serve
 HTTPS on host `NEXUS_HTTP_HOST` and port `443` with a valid TLS certificate.
 
+**ATTENTION:**: Setting the `JWT_REQUIRES_MEMBERSHIP_VERIFICATION` environment variable to `false` inherently makes `nexus-proxy` less secure.
+In this scenario, a user containing a valid JWT token will be able to make requests using CLI tools like Maven or Docker without having to go through the OAuth2 consent screen.
+For example, if a user leaves the organization while keeping a valid JWT token, and this environment variable is set to `false`, they will still be able to make requests to Nexus.
+
 ## Introduction
 
 While deploying Nexus Repository Manager on GKE, we identified a couple issues:
@@ -165,6 +169,7 @@ $ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
 | `CLIENT_SECRET`                     | The abovementioned application's client secret. |
 | `CLOUD_IAM_AUTH_ENABLED`            | Whether to enable authentication against Google Cloud IAM. |
 | `ENFORCE_HTTPS`                     | Whether to enforce access by HTTPS only. If set to `true` Nexus will only be accessible via HTTPS. |
+| `JWT_REQUIRES_MEMBERSHIP_VERIFICATION` | Whether users presenting valid JWT tokens must still be verified for membership within the organization. |
 | `KEYSTORE_PATH`                     | The path to the keystore containing the key with which to sign JWTs. |
 | `KEYSTORE_PASS`                     | The password of the abovementioned keystore. |
 | `LOG_LEVEL`                         | The desired log level (i.e., `trace`, `debug`, `info`, `warn` or `error`). Defaults to `info`. |

@@ -4,8 +4,8 @@ import static com.google.api.services.cloudresourcemanager.CloudResourceManagerS
 import static com.google.api.services.oauth2.Oauth2Scopes.USERINFO_EMAIL;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
+import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.api.client.auth.oauth2.Credential;
 import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
 import com.google.api.client.googleapis.auth.oauth2.GoogleTokenResponse;
@@ -18,6 +18,8 @@ import com.google.api.client.util.store.MemoryDataStoreFactory;
 import com.google.api.services.cloudresourcemanager.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.model.Organization;
 import com.google.common.collect.ImmutableSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -28,12 +30,14 @@ import java.util.Set;
  * Wraps {@link GoogleAuthorizationCodeFlow} caching authorization results and providing unchecked methods.
  */
 public class CachingGoogleAuthCodeFlow {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CachingGoogleAuthCodeFlow.class);
+
     private static final DataStoreFactory DATA_STORE_FACTORY = new MemoryDataStoreFactory();
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final Set<String> SCOPES = ImmutableSet.of(CLOUD_PLATFORM_READ_ONLY, USERINFO_EMAIL);
 
-    private final LoadingCache<String, Boolean> authCache;
+    private final Cache<String, Boolean> authCache;
     private final GoogleAuthorizationCodeFlow authFlow;
     private final String organizationId;
     private final String redirectUri;
@@ -46,7 +50,7 @@ public class CachingGoogleAuthCodeFlow {
         this.authCache = Caffeine.newBuilder()
                 .maximumSize(4096)
                 .expireAfterWrite(authCacheTtl, MILLISECONDS)
-                .build(k -> this.isOrganizationMember(k, true));
+                .build();
         this.authFlow = new GoogleAuthorizationCodeFlow.Builder(
                 HTTP_TRANSPORT,
                 JSON_FACTORY,
@@ -115,15 +119,20 @@ public class CachingGoogleAuthCodeFlow {
      * @param userId the user's ID (typically his organization email address).
      * @return whether a given user is a member of the organization.
      */
-    public final boolean isOrganizationMember(final String userId) {
-        return isOrganizationMember(userId, false);
-    }
+    public final Boolean isOrganizationMember(final String userId) {
+        // Try to grab membership information from the cache.
+        Boolean isMember = this.authCache.getIfPresent(userId);
 
-    private final boolean isOrganizationMember(final String userId,
-                                               final boolean forceCheck) {
-        if (!forceCheck) {
-            return this.authCache.get(userId);
+        // If we have previously validated this user as a member of the organization, return.
+        if (isMember != null && isMember) {
+            LOGGER.debug("{} is an organization member (cache hit).", userId);
+            return true;
         }
+
+        LOGGER.debug("No entry in cache for {}. Hitting the Resource Manager API.", userId);
+
+        // At this point, either we've never validated this user as a member of the organization, or we've tried to but they weren't.
+        // Hence we perform the validation process afresh by getting the list of organizations for which the user is a member.
 
         final Credential credential = this.loadCredential(userId);
 
@@ -143,8 +152,18 @@ public class CachingGoogleAuthCodeFlow {
             throw new UncheckedIOException(ex);
         }
 
-        return organizations != null
+        // Check whether the current organization is in the list of the user's organizations.
+        isMember = organizations != null
                 && organizations.stream().anyMatch(org -> this.organizationId.equals(org.getOrganizationId()));
+
+        // If we've successfully validated this user as a member of the organization, put this information in the cache.
+        if (isMember) {
+            LOGGER.debug("{} has been verified as an organization member. Caching.", userId);
+            this.authCache.put(userId, true);
+        } else {
+            LOGGER.debug("{} couldn't be verified as an organization member.");
+        }
+        return isMember;
     }
 
     /**
