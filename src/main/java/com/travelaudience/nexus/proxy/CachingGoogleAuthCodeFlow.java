@@ -1,9 +1,5 @@
 package com.travelaudience.nexus.proxy;
 
-import static com.google.api.services.cloudresourcemanager.CloudResourceManagerScopes.CLOUD_PLATFORM_READ_ONLY;
-import static com.google.api.services.oauth2.Oauth2Scopes.USERINFO_EMAIL;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.api.client.auth.oauth2.Credential;
@@ -13,8 +9,6 @@ import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.jackson2.JacksonFactory;
-import com.google.api.client.util.store.DataStoreFactory;
-import com.google.api.client.util.store.MemoryDataStoreFactory;
 import com.google.api.services.cloudresourcemanager.CloudResourceManager;
 import com.google.api.services.cloudresourcemanager.model.Organization;
 import com.google.common.collect.ImmutableSet;
@@ -26,13 +20,16 @@ import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.Set;
 
+import static com.google.api.services.cloudresourcemanager.CloudResourceManagerScopes.CLOUD_PLATFORM_READ_ONLY;
+import static com.google.api.services.oauth2.Oauth2Scopes.USERINFO_EMAIL;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 /**
  * Wraps {@link GoogleAuthorizationCodeFlow} caching authorization results and providing unchecked methods.
  */
 public class CachingGoogleAuthCodeFlow {
     private static final Logger LOGGER = LoggerFactory.getLogger(CachingGoogleAuthCodeFlow.class);
 
-    private static final DataStoreFactory DATA_STORE_FACTORY = new MemoryDataStoreFactory();
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
     private static final JsonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
     private static final Set<String> SCOPES = ImmutableSet.of(CLOUD_PLATFORM_READ_ONLY, USERINFO_EMAIL);
@@ -47,6 +44,7 @@ public class CachingGoogleAuthCodeFlow {
                                       final String clientSecret,
                                       final String organizationId,
                                       final String redirectUri) throws IOException {
+
         this.authCache = Caffeine.newBuilder()
                 .maximumSize(4096)
                 .expireAfterWrite(authCacheTtl, MILLISECONDS)
@@ -58,7 +56,7 @@ public class CachingGoogleAuthCodeFlow {
                 clientSecret,
                 SCOPES
         ).setDataStoreFactory(
-                DATA_STORE_FACTORY
+                ProxyDataStoreFactory.getDefaultInstance()
         ).setAccessType(
                 "offline"
         ).setApprovalPrompt(

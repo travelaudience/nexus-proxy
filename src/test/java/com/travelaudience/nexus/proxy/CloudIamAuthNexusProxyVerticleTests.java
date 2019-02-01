@@ -29,7 +29,7 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(VertxUnitRunner.class)
-@PrepareForTest(CloudIamAuthNexusProxyVerticle.class)
+@PrepareForTest({CloudIamAuthNexusProxyVerticle.class, ProxyDataStoreFactory.class})
 public class CloudIamAuthNexusProxyVerticleTests {
     private static final String HOST = "localhost";
     private static final int PORT = findRandomUnusedPort();
@@ -47,6 +47,7 @@ public class CloudIamAuthNexusProxyVerticleTests {
             put("CLOUD_IAM_AUTH_ENABLED", "true");
             put("KEYSTORE_PATH", "keystore.jceks");
             put("KEYSTORE_PASS", "safe#passw0rd!");
+            put("CREDENTIAL_STORE_PATH", "build/temp");
             put("NEXUS_DOCKER_HOST", "containers.example.com");
             put("NEXUS_HTTP_HOST", "nexus.example.com");
             put("NEXUS_RUT_HEADER", "X-Forwarded-User");
