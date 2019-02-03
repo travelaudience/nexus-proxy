@@ -35,6 +35,7 @@ public class UnauthenticatedNexusProxyVerticleTests {
             put("ALLOWED_USER_AGENTS_ON_ROOT_REGEX", "GoogleHC");
             put("BIND_PORT", String.valueOf(PORT));
             put("CLOUD_IAM_AUTH_ENABLED", "false");
+            put("DOCKER_PROXY_ENABLED", "true");
             put("NEXUS_DOCKER_HOST", "containers.example.com");
             put("NEXUS_HTTP_HOST", "nexus.example.com");
             put("NEXUS_RUT_HEADER", "X-Forwarded-User");

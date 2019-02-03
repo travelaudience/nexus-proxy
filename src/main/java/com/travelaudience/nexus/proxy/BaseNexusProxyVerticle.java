@@ -32,14 +32,23 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
     private static final String TLS_CERT_PK12_PATH = System.getenv("TLS_CERT_PK12_PATH");
     private static final String TLS_CERT_PK12_PASS = System.getenv("TLS_CERT_PK12_PASS");
     private static final Boolean TLS_ENABLED = Boolean.parseBoolean(System.getenv("TLS_ENABLED"));
-    private static final Integer UPSTREAM_DOCKER_PORT = Ints.tryParse(System.getenv("UPSTREAM_DOCKER_PORT"));
     private static final String UPSTREAM_HOST = System.getenv("UPSTREAM_HOST");
     private static final Integer UPSTREAM_HTTP_PORT = Ints.tryParse(System.getenv("UPSTREAM_HTTP_PORT"));
 
+    protected static final boolean DOCKER_PROXY_ENABLED;
+    private static final Integer UPSTREAM_DOCKER_PORT;
+    protected static final String NEXUS_DOCKER_HOST;
+
+    static {
+        final String env = System.getenv("DOCKER_PROXY_ENABLED");
+        DOCKER_PROXY_ENABLED = env == null || Boolean.parseBoolean(env);
+        UPSTREAM_DOCKER_PORT = DOCKER_PROXY_ENABLED ? Ints.tryParse(System.getenv("UPSTREAM_DOCKER_PORT")) : null;
+        NEXUS_DOCKER_HOST = DOCKER_PROXY_ENABLED ? System.getenv("NEXUS_DOCKER_HOST") : null;
+    }
+
     private static final CharSequence X_FORWARDED_PROTO = HttpHeaders.createOptimized("X-Forwarded-Proto");
 
-    protected final String nexusDockerHost = System.getenv("NEXUS_DOCKER_HOST");
-    protected final String nexusHttpHost = System.getenv("NEXUS_HTTP_HOST");
+    protected static final String NEXUS_HTTP_HOST = System.getenv("NEXUS_HTTP_HOST");
 
     protected final HandlebarsTemplateEngine handlebars = HandlebarsTemplateEngine.create();
 
@@ -53,12 +62,17 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
 
     @Override
     public final void start() throws Exception {
-        final NexusHttpProxy dockerProxy = NexusHttpProxy.create(
-                vertx,
-                UPSTREAM_HOST,
-                UPSTREAM_DOCKER_PORT,
-                NEXUS_RUT_HEADER
-        );
+        final NexusHttpProxy dockerProxy;
+        if (DOCKER_PROXY_ENABLED) {
+            dockerProxy = NexusHttpProxy.create(
+                    vertx,
+                    UPSTREAM_HOST,
+                    UPSTREAM_DOCKER_PORT,
+                    NEXUS_RUT_HEADER
+            );
+        } else {
+            dockerProxy = null;
+        }
         final NexusHttpProxy httpProxy = NexusHttpProxy.create(
                 vertx,
                 UPSTREAM_HOST,
@@ -81,17 +95,19 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
             }
         });
 
-        router.route(ALL_PATHS).handler(VirtualHostHandler.create(nexusDockerHost, ctx -> {
-            ctx.data().put(PROXY, dockerProxy);
-            ctx.next();
-        }));
+        if (DOCKER_PROXY_ENABLED) {
+            router.route(ALL_PATHS).handler(VirtualHostHandler.create(NEXUS_DOCKER_HOST, ctx -> {
+                ctx.data().put(PROXY, dockerProxy);
+                ctx.next();
+            }));
+        }
 
-        router.route(ALL_PATHS).handler(VirtualHostHandler.create(nexusHttpHost, ctx -> {
+        router.route(ALL_PATHS).handler(VirtualHostHandler.create(NEXUS_HTTP_HOST, ctx -> {
             ctx.data().put(PROXY, httpProxy);
             ctx.next();
         }));
 
-        router.route(ALL_PATHS).handler(VirtualHostHandler.create(nexusHttpHost, ctx -> {
+        router.route(ALL_PATHS).handler(VirtualHostHandler.create(NEXUS_HTTP_HOST, ctx -> {
             final String protocol = ctx.request().headers().get(X_FORWARDED_PROTO);
 
             if (!ENFORCE_HTTPS || "https".equals(protocol)) {
@@ -112,7 +128,7 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
                 return;
             }
 
-            ctx.put("nexus_http_host", nexusHttpHost);
+            ctx.put("nexus_http_host", NEXUS_HTTP_HOST);
 
             handlebars.render(ctx, "templates", "/http-disabled.hbs", res -> { // The '/' is somehow necessary.
                 if (res.succeeded()) {
@@ -136,9 +152,11 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
             // The only way proxy can be null is if the Host header of the request doesn't match any of the known
             // hosts (NEXUS_DOCKER_HOST or NEXUS_HTTP_HOST). In that scenario we should fail gracefully and indicate
             // how to access Nexus properly.
-            ctx.put("nexus_http_host", nexusHttpHost);
-            ctx.put("nexus_docker_host", nexusDockerHost);
-            handlebars.render(ctx, "templates", "/invalid-host.hbs", res -> { // The '/' is somehow necessary.
+            ctx.put("nexus_http_host", NEXUS_HTTP_HOST);
+            if (DOCKER_PROXY_ENABLED) {
+                ctx.put("nexus_docker_host", NEXUS_DOCKER_HOST);
+            }
+            handlebars.render(ctx,  "templates", "/invalid-host.hbs", res -> { // The '/' is somehow necessary.
                 if (res.succeeded()) {
                     ctx.response().setStatusCode(400).end(res.result());
                 } else {

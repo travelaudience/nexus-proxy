@@ -47,6 +47,7 @@ public class CloudIamAuthNexusProxyVerticleTests {
             put("CLOUD_IAM_AUTH_ENABLED", "true");
             put("KEYSTORE_PATH", "keystore.jceks");
             put("KEYSTORE_PASS", "safe#passw0rd!");
+            put("DOCKER_PROXY_ENABLED", "true");
             put("NEXUS_DOCKER_HOST", "containers.example.com");
             put("NEXUS_HTTP_HOST", "nexus.example.com");
             put("NEXUS_RUT_HEADER", "X-Forwarded-User");
