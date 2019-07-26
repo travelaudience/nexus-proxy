@@ -1,10 +1,17 @@
+# -- build
 FROM openjdk:8-jdk-slim AS builder
 COPY ./ /src/
 WORKDIR /src/
 RUN ./gradlew --info --no-daemon build
 
-FROM quay.io/pires/docker-jre:8u191
+# -- run
+FROM alpine:3.10
 
+# Install java runtime
+RUN apk add --no-cache --update openjdk8-jre && \
+    rm -rf /tmp/* /var/cache/apk/*
+
+ENV JAVA_HOME=/usr/lib/jvm/default-jvm/jre
 ENV ALLOWED_USER_AGENTS_ON_ROOT_REGEX "GoogleHC"
 ENV AUTH_CACHE_TTL "300"
 ENV BIND_PORT "8080"
