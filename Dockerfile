@@ -12,6 +12,7 @@ RUN apk add --no-cache --update openjdk8-jre && \
     rm -rf /tmp/* /var/cache/apk/*
 
 ENV JAVA_HOME=/usr/lib/jvm/default-jvm/jre
+ENV JAVA_OPTS ""
 ENV ALLOWED_USER_AGENTS_ON_ROOT_REGEX "GoogleHC"
 ENV AUTH_CACHE_TTL "300"
 ENV BIND_PORT "8080"
@@ -39,6 +40,4 @@ COPY --from=builder /src/build/libs/nexus-proxy-2.3.0.jar /nexus-proxy.jar
 EXPOSE 8080
 EXPOSE 8443
 
-CMD ["-jar", "/nexus-proxy.jar"]
-
-ENTRYPOINT ["java"]
+CMD java $JAVA_OPTS -jar /nexus-proxy.jar
