@@ -130,6 +130,23 @@ $ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
   java -jar ./build/libs/nexus-proxy-2.3.0.jar
 ```
 
+## Running the proxy with docker registry disabled
+
+The following command will run the proxy on port `8080` with no authentication
+and pointing to a local Nexus instance. Docker registry will not be proxied:
+
+```bash
+$ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
+  BIND_PORT="8080" \
+  DOCKER_PROXY_ENABLED="false" \
+  NEXUS_HTTP_HOST="nexus.example.com" \
+  NEXUS_RUT_HEADER="X-Forwarded-User" \
+  TLS_ENABLED="false" \
+  UPSTREAM_HTTP_PORT="8081" \
+  UPSTREAM_HOST="localhost" \
+  java -jar ./build/libs/nexus-proxy-2.3.0.jar
+```
+
 ## Running the proxy with GCP IAM authentication enabled
 
 The following command will run the proxy on port `8080` with GCP IAM
@@ -168,6 +185,7 @@ $ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
 | `CLIENT_ID`                         | The application's client ID in _GCP / API Manager / Credentials_. |
 | `CLIENT_SECRET`                     | The abovementioned application's client secret. |
 | `CLOUD_IAM_AUTH_ENABLED`            | Whether to enable authentication against Google Cloud IAM. |
+| `DOCKER_PROXY_ENABLED`              | Whether to enable proxying to Nexus Docker registry. Defaults to `true`. |
 | `ENFORCE_HTTPS`                     | Whether to enforce access by HTTPS only. If set to `true` Nexus will only be accessible via HTTPS. |
 | `JAVA_TOOL_OPTIONS`                 | JVM options to provide, for example `-XX:MaxDirectMemorySize=1024M`. |
 | `JWT_REQUIRES_MEMBERSHIP_VERIFICATION` | Whether users presenting valid JWT tokens must still be verified for membership within the organization. |

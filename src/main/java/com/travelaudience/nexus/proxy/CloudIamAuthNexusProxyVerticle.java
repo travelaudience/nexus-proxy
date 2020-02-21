@@ -103,11 +103,17 @@ public class CloudIamAuthNexusProxyVerticle extends BaseNexusProxyVerticle {
                 REDIRECT_URL
         );
 
+        final ImmutableList<String> audience;
+        if (DOCKER_PROXY_ENABLED) {
+            audience = ImmutableList.of(NEXUS_DOCKER_HOST, NEXUS_HTTP_HOST);
+        } else {
+            audience = ImmutableList.of(NEXUS_HTTP_HOST);
+        }
         this.jwtAuth = JwtAuth.create(
                 vertx,
                 KEYSTORE_PATH,
                 KEYSTORE_PASS,
-                ImmutableList.of(nexusDockerHost, nexusHttpHost)
+                audience
         );
     }
 
@@ -119,22 +125,24 @@ public class CloudIamAuthNexusProxyVerticle extends BaseNexusProxyVerticle {
 
     @Override
     protected void configureRouting(Router router) {
-        // Enforce authentication for the Docker API.
-        router.route(DOCKER_V2_API_PATHS).handler(VirtualHostHandler.create(nexusDockerHost, ctx -> {
-            if (ctx.request().headers().get(HttpHeaders.AUTHORIZATION) == null) {
-                LOGGER.debug("No authorization header found. Denying.");
-                ctx.response().putHeader(WWW_AUTHENTICATE_HEADER_NAME, WWW_AUTHENTICATE_HEADER_VALUE);
-                ctx.response().putHeader(DOCKER_DISTRIBUTION_API_VERSION_NAME, DOCKER_DISTRIBUTION_API_VERSION_VALUE);
-                ctx.fail(401);
-            } else {
-                LOGGER.debug("Authorization header found.");
-                ctx.data().put(HAS_AUTHORIZATION_HEADER, true);
-                ctx.next();
-            }
-        }));
+        if (DOCKER_PROXY_ENABLED) {
+            // Enforce authentication for the Docker API.
+            router.route(DOCKER_V2_API_PATHS).handler(VirtualHostHandler.create(NEXUS_DOCKER_HOST, ctx -> {
+                if (ctx.request().headers().get(HttpHeaders.AUTHORIZATION) == null) {
+                    LOGGER.debug("No authorization header found. Denying.");
+                    ctx.response().putHeader(WWW_AUTHENTICATE_HEADER_NAME, WWW_AUTHENTICATE_HEADER_VALUE);
+                    ctx.response().putHeader(DOCKER_DISTRIBUTION_API_VERSION_NAME, DOCKER_DISTRIBUTION_API_VERSION_VALUE);
+                    ctx.fail(401);
+                } else {
+                    LOGGER.debug("Authorization header found.");
+                    ctx.data().put(HAS_AUTHORIZATION_HEADER, true);
+                    ctx.next();
+                }
+            }));
+        }
 
         // Enforce authentication for the Nexus UI and API.
-        router.route(NEXUS_REPOSITORY_PATHS).handler(VirtualHostHandler.create(nexusHttpHost, ctx -> {
+        router.route(NEXUS_REPOSITORY_PATHS).handler(VirtualHostHandler.create(NEXUS_HTTP_HOST, ctx -> {
             if (ctx.request().headers().get(HttpHeaders.AUTHORIZATION) == null) {
                 LOGGER.debug("No authorization header found. Denying.");
                 ctx.response().putHeader(WWW_AUTHENTICATE_HEADER_NAME, WWW_AUTHENTICATE_HEADER_VALUE);
