@@ -171,6 +171,7 @@ $ ALLOWED_USER_AGENTS_ON_ROOT_REGEX="GoogleHC" \
 | `ENFORCE_HTTPS`                     | Whether to enforce access by HTTPS only. If set to `true` Nexus will only be accessible via HTTPS. |
 | `JAVA_TOOL_OPTIONS`                 | JVM options to provide, for example `-XX:MaxDirectMemorySize=1024M`. |
 | `JWT_REQUIRES_MEMBERSHIP_VERIFICATION` | Whether users presenting valid JWT tokens must still be verified for membership within the organization. |
+| `JWT_AUTH_TOKEN_EXPIRE_DAYS`        | Number of days a JWT Token is valid. Does not apply to already generated tokens. Defaults to 365. |
 | `KEYSTORE_PATH`                     | The path to the keystore containing the key with which to sign JWTs. |
 | `KEYSTORE_PASS`                     | The password of the abovementioned keystore. |
 | `LOG_LEVEL`                         | The desired log level (i.e., `trace`, `debug`, `info`, `warn` or `error`). Defaults to `info`. |

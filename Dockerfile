@@ -34,6 +34,7 @@ ENV TLS_ENABLED "false"
 ENV UPSTREAM_DOCKER_PORT "5003"
 ENV UPSTREAM_HOST "localhost"
 ENV UPSTREAM_HTTP_PORT "8081"
+ENV JWT_AUTH_EXPIRE_DAYS "365"
 
 COPY --from=builder /src/build/libs/nexus-proxy-2.3.0.jar /nexus-proxy.jar
 
