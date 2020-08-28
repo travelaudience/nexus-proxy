@@ -126,9 +126,11 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
         configureRouting(router);
 
         router.route(ALL_PATHS).handler(ctx -> {
-            if (ctx.request().getHeader("Expect") != null && 
-            		ctx.request().getHeader("Expect").contains("100-continue"))
+        	String expectHeader = ctx.request().getHeader("Expect");
+            if (expectHeader != null && 
+            		expectHeader.contains("100-continue")) {
             	ctx.response().writeContinue();
+            }
 
             final NexusHttpProxy proxy = ((NexusHttpProxy) ctx.data().get(PROXY));
 
