@@ -111,7 +111,7 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
                 ctx.next();
                 return;
             }
-
+            
             ctx.put("nexus_http_host", nexusHttpHost);
 
             handlebars.render(ctx, "templates", "/http-disabled.hbs", res -> { // The '/' is somehow necessary.
@@ -126,6 +126,10 @@ public abstract class BaseNexusProxyVerticle extends AbstractVerticle {
         configureRouting(router);
 
         router.route(ALL_PATHS).handler(ctx -> {
+            if (ctx.request().getHeader("Expect") != null && 
+            		ctx.request().getHeader("Expect").contains("100-continue"))
+            	ctx.response().writeContinue();
+
             final NexusHttpProxy proxy = ((NexusHttpProxy) ctx.data().get(PROXY));
 
             if (proxy != null) {
