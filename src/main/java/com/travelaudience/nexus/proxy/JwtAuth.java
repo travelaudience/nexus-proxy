@@ -2,6 +2,9 @@ package com.travelaudience.nexus.proxy;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
+import com.google.common.base.Objects;
+import com.google.common.primitives.Ints;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -18,6 +21,9 @@ import java.util.function.Consumer;
 public final class JwtAuth {
     private static final String UID_KEY = "uid";
 
+    private static final Integer JWT_AUTH_TOKEN_EXPIRE_DAYS = Ints.tryParse(Objects.firstNonNull(
+            System.getenv("JWT_AUTH_TOKEN_EXPIRE_DAYS"), "365"));
+
     private final List<String> audience;
     private final JWTAuth jwtAuth;
     private final JWTOptions jwtOptions;
@@ -33,7 +39,7 @@ public final class JwtAuth {
         this.jwtOptions = new JWTOptions()
                 .setAudience(audience)
                 .setAlgorithm("RS256")
-                .setExpiresInSeconds(Duration.of(365, DAYS).getSeconds());
+                .setExpiresInSeconds(Duration.of(JWT_AUTH_TOKEN_EXPIRE_DAYS, DAYS).getSeconds());
         this.audience = audience;
     }
 
